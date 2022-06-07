@@ -1,0 +1,156 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2015-06-15",
+            "name": "migServerVNET",
+            "location": "ukwest",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "migServerSubnet",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2015-06-15",
+            "name": "migServerNSG",
+            "location": "ukwest",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-01-01",
+            "name": "migServerPublicIP",
+            "location": "ukwest",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "publicIPAllocationMethod": null
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "name": "migServerVMNic",
+            "location": "ukwest",
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/migServerVNET",
+                "Microsoft.Network/networkSecurityGroups/migServerNSG",
+                "Microsoft.Network/publicIpAddresses/migServerPublicIP"
+            ],
+            "tags": {},
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfigmigServer",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "/subscriptions/97c26c3e-03d9-49ab-9106-8718df2bbdf5/resourceGroups/Unit19Labs-Dashboard/providers/Microsoft.Network/virtualNetworks/migServerVNET/subnets/migServerSubnet"
+                            },
+                            "publicIPAddress": {
+                                "id": "/subscriptions/97c26c3e-03d9-49ab-9106-8718df2bbdf5/resourceGroups/Unit19Labs-Dashboard/providers/Microsoft.Network/publicIPAddresses/migServerPublicIP"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "/subscriptions/97c26c3e-03d9-49ab-9106-8718df2bbdf5/resourceGroups/Unit19Labs-Dashboard/providers/Microsoft.Network/networkSecurityGroups/migServerNSG"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-11-01",
+            "name": "migServer",
+            "location": "ukwest",
+            "dependsOn": [
+                "Microsoft.Network/networkInterfaces/migServerVMNic"
+            ],
+            "tags": {},
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B1s"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "/subscriptions/97c26c3e-03d9-49ab-9106-8718df2bbdf5/resourceGroups/Unit19Labs-Dashboard/providers/Microsoft.Network/networkInterfaces/migServerVMNic",
+                            "properties": {
+                                "deleteOption": null
+                            }
+                        }
+                    ]
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "name": null,
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": null
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "0001-com-ubuntu-server-focal",
+                        "sku": "20_04-lts",
+                        "version": "latest"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "migServer",
+                    "adminUsername": "azureuser",
+                    "customData": "I2Nsb3VkLWNvbmZpZwpwYWNrYWdlX3VwZ3JhZGU6IHRydWUKcGFja2FnZXM6CiAgLSBkb2NrZXIuaW8KICAtIGRvY2tlci1jb21wb3NlCgpncm91cHM6CiAgLSBkb2NrZXIKCnVzZXJzOgogIC0gZGVmYXVsdAogIC0gbmFtZTogYXp1cmV1c2VyCiAgICBncm91cHM6IGRvY2tlcgoKd3JpdGVfZmlsZXM6CiAgLSBvd25lcjogcm9vdDpyb290CiAgICBwYXRoOiAvZW52LXNldHRpbmdzCiAgICBjb250ZW50OiB8CiAgICAgICMgZW52aXJvbm1lbnQgZmlsZSBmb3IgZG9ja2VyIE1JRyBzdGFjawoKICAgICAgIyBkb2NrZXIgdmFyaWFibGVzCiAgICAgIENPTVBPU0VfUFJPSkVDVF9OQU1FPU1JR3N0YWNrCgogICAgICAjIG1xdHQgdmFyaWFibGVzCiAgICAgIEJBU0VfVE9QSUM9dW5pdDE5LWxhYi1kYXNoYm9hcmRzCiAgICAgIE1RVFRfVVNFUk5BTUU9bXF0dAogICAgICBNUVRUX1BBU1NXT1JEPXBhc3N3b3JkCgogICAgICAjIGluZmx1eGRiIHZhcmlhYmxlcwogICAgICBJTkZMVVhEQl9EQVRBQkFTRT1Vbml0MTlMYWIKCiAgICAgICMgZ3JhZmFuYSB2YXJpYWJsZXMKICAgICAgR1JBRkFOQV9QQVNTV09SRD1wYXNzd29yZAoKcnVuY21kOgogIC0gZ2l0IGNsb25lIGh0dHBzOi8vZ2l0aHViLmNvbS9tYXJrcGF0dGVyc29uMjcvZG9ja2VyLU1JRy1zdGFjay5naXQKICAtIG12IC1mIC9lbnYtc2V0dGluZ3MgZG9ja2VyLU1JRy1zdGFjay8uZW52CiAgLSBjZCBkb2NrZXItTUlHLXN0YWNrICYmIGRvY2tlci1jb21wb3NlIHVwCg==",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcAEz8Frs+y3DF9qCytzemo4mOhk5opEDjyqMgBNWGzVLjRP2EmvnOdKAsIXWir0qI68kX1zyQnOAraej+2RXM6881Z8UDjQls4zIGeGIWYyJ+X4kqfMPlBedmegVk95N2cHaP9ChTfVyytRUvaO5PyuxXK4IpTViQXH7tggM1RPm/INYBS292tw0GCUPuWoACH03CZhQie8aypCkcJXZN5zGbhJHOMclLuGhZZngsKn2xzYewfwchfIXQVEviDrvFnOizPgv95dkEnzpHQ5hUs2iSHNCsfSfg7JuuUNx0rXKpBErod6z9C/c3QQF6Z/LQc15puQ1AsUlUa/T0E24P mark@Brunel\n",
+                                    "path": "/home/azureuser/.ssh/authorized_keys"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

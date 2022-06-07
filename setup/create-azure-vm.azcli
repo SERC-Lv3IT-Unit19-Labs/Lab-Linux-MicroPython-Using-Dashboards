@@ -1,0 +1,25 @@
+#!/bin/bash
+# script deploys VM to Azure and installs docker compose stack with MQTT, InfluxDB and Grafana.
+# script needs Azure CLI. To install see https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+
+RESOURCE_GROUP="Unit19Labs-Dashboard"
+LOCATION="UK West"
+VM_NAME="migServer"
+
+# create resource group
+az group create --name $RESOURCE_GROUP --location "$LOCATION"
+
+# create VM
+az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image Canonical:0001-com-ubuntu-server-focal:20_04-lts:latest --size Standard_B1s --admin-username azureuser \
+    --custom-data cloud-init-docker-mig-stack.txt
+    # --admin-password Passw0rd1234 --authentication-type all
+    # --generate-ssh-keys
+
+# open ports on VM
+az vm open-port --port 1883,9001,3000 --resource-group $RESOURCE_GROUP --name $VM_NAME
+
+# print public IP address
+echo "Public IP: $(az vm show -d -g $RESOURCE_GROUP -n $VM_NAME --query publicIps -o tsv)"
+
+# # clean up
+# az group delete --name $RESOURCE_GROUP

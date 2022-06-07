@@ -1,0 +1,38 @@
+#cloud-config
+package_upgrade: true
+packages:
+  - docker.io
+  - docker-compose
+
+groups:
+  - docker
+
+users:
+  - default
+  - name: azureuser
+    groups: docker
+
+write_files:
+  - owner: root:root
+    path: /env-settings
+    content: |
+      # environment file for docker MIG stack
+
+      # docker variables
+      COMPOSE_PROJECT_NAME=MIGstack
+
+      # mqtt variables
+      BASE_TOPIC=unit19-lab-dashboards
+      MQTT_USERNAME=mqtt
+      MQTT_PASSWORD=password
+
+      # influxdb variables
+      INFLUXDB_DATABASE=Unit19Lab
+
+      # grafana variables
+      GRAFANA_PASSWORD=password
+
+runcmd:
+  - git clone https://github.com/markpatterson27/docker-MIG-stack.git
+  - mv -f /env-settings docker-MIG-stack/.env
+  - cd docker-MIG-stack && docker-compose up
