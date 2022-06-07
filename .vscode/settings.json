@@ -1,0 +1,17 @@
+{
+    // micropython stubs
+    "python.autoComplete.extraPaths": [
+        "lib",
+        // "micropython-stubs/stubs/cpython_core",
+        // "micropython-stubs/stubs/micropython-1_13-frozen/esp32/GENERIC",
+        // "mp-stubs/esp32",
+        // "micropython-stubs/stubs/micropython-esp32-1_13-103"
+    ],
+    "python.analysis.extraPaths": [
+        "lib",
+        // "micropython-stubs/stubs/cpython_core",
+        // "micropython-stubs/stubs/micropython-1_13-frozen/esp32/GENERIC",
+        // "mp-stubs/esp32",
+        // "micropython-stubs/stubs/micropython-esp32-1_13-103"
+    ],
+}
