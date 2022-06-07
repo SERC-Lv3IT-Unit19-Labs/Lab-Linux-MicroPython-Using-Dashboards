@@ -109,7 +109,7 @@ class HCSR04:
         :rtype: float
         '''
         jump = random.choice([0,0,1,1,1,1,2,3,5,8])
-        direction = random.choice([-1,1,1,1,1])
+        direction = random.choice([-1,1,1,1,1,1,1,1])
         change = random.randint(0, 100) * jump * direction
 
         if self._distance - change < self._min_range:
