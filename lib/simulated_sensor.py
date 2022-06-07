@@ -81,3 +81,48 @@ class TempHumSensor(TemperatureSensor):
         :rtype: float, float
         '''
         return self.read_temperature(), self.read_humidity()
+
+class HCSR04:
+    '''Represents a HCSR04 ultrasonic distance sensor'''
+
+    def __init__(self, trigger_pin, echo_pin):
+        '''
+
+        :param trigger_pin: pin number sensor trigger attached to
+        :type trigger_pin: int
+        :param echo_pin: pin number sensor echo attached to
+        :type echo_pin: int
+        '''
+        self.trigger_pin = trigger_pin
+        self.echo_pin = echo_pin
+        self._min_range = 7
+        self._max_range = 1600
+        self._distance = random.randint(self._min_range*100, self._max_range*100) / 100
+
+    def distance_mm(self):
+        '''
+        Get the distance in milimeters without floating point operations.
+
+        Returns a simulated distance reading
+
+        :return: Distance
+        :rtype: float
+        '''
+        jump = random.choice([0,0,1,1,1,1,2,3,5,8])
+        direction = random.choice([-1,1,1,1,1])
+        change = random.randint(0, 100) * jump * direction
+
+        if self._distance - change < self._min_range:
+            self._distance = self._min_range if random.randint(0,5) else self._max_range
+        else:
+            self._distance -= change
+
+        time.sleep_ms(30)  # simulate delay reading from device
+        return self._distance
+
+    def distance_cm(self):
+        """
+        Get the distance in centimeters with floating point operations.
+        It returns a float
+        """
+        return self.distance_mm() / 10
